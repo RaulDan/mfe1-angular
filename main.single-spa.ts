@@ -1,15 +1,35 @@
+import { APP_BASE_HREF } from '@angular/common';
+
 import { bootstrapApplication, platformBrowser } from '@angular/platform-browser';
+
 import { NavigationStart, Router } from '@angular/router';
+
 import { provideSingleSpa, provideSingleSpaPlatform, singleSpaAngular } from 'single-spa-angular';
+
 import { appConfig } from './src/app/app.config';
 import { App } from './src/app/app';
 
-const lifecycles = singleSpaAngular({
-  bootstrapFunction: () => {
+interface MicrofrontendProps {
+  basePath: string;
+}
+
+const lifecycles = singleSpaAngular<MicrofrontendProps>({
+  bootstrapFunction: (props) => {
     const platformRef = platformBrowser(provideSingleSpaPlatform());
+
     return bootstrapApplication(
       App,
-      { ...appConfig, providers: [...appConfig.providers, provideSingleSpa()] },
+      {
+        ...appConfig,
+        providers: [
+          ...appConfig.providers,
+          provideSingleSpa(),
+          {
+            provide: APP_BASE_HREF,
+            useValue: props.basePath ?? '/',
+          },
+        ],
+      },
       { platformRef },
     );
   },
@@ -18,4 +38,5 @@ const lifecycles = singleSpaAngular({
   NavigationStart,
   NgZone: 'noop',
 });
+
 export const { bootstrap, mount, unmount } = lifecycles;
